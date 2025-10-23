@@ -32,10 +32,19 @@
           run: |
             # Install Grype
             curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
-
-            # Run scan and save JSON output
+      
+            # Run scan with table output first to see what it found
+            echo "=== Running Grype scan ==="
+            grype dir:. -o table
+      
+            # Now run again for JSON output
             grype dir:. -o json > grype-results.json
-
+      
+            # Show summary
+            echo "=== Scan summary ==="
+            cat grype-results.json | jq '.matches | length'
+            cat grype-results.json | jq '.matches[] | {package: .artifact.name, vulnerability: .vulnerability.id, severity: .vulnerability.severity}'
+      
             # Add metadata to results
             cat grype-results.json | jq \
               --arg scan_id "${{ github.event.inputs.scan_id }}" \
